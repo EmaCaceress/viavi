@@ -44,11 +44,16 @@
 
   <br>
 
-  <img id="grafica" src="../grafica.png" alt="Gráfica">
+  <img id="grafica" src="https://chair-evanescence-duties-alleged.trycloudflare.com/grafica.png" alt="Gráfica">
 
   <script>
+    const IMG_URL = "https://chair-evanescence-duties-alleged.trycloudflare.com/grafica.png";
+    setInterval(() => {
+      img.src = IMG_URL + "?t=" + Date.now();
+    }, 10000);
+
     function descargarImagen() {
-      const url = 'grafica.png?t=' + Date.now();
+      const url = IMG_URL + Date.now();
 
       fetch(url)
         .then(r => {
