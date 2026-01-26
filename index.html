@@ -100,6 +100,7 @@
       info.textContent = "Última actualización: " + new Date().toLocaleString();
     }
 
+
     btnRefresh.onclick = async () => {
       btnRefresh.disabled = true;
       btnRefresh.textContent = "Actualizando...";
@@ -116,14 +117,26 @@
       }
     };
 
-    btnDownload.onclick = () => {
+    btnDownload.onclick = async () => {
+    try {
+      const response = await fetch(IMG_URL + "?t=" + Date.now());
+      const blob = await response.blob();
+
+      const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = IMG_URL + "?download=1&t=" + Date.now();
+      a.href = url;
       a.download = "grafica.png";
+
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-    };
+
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      alert("Error al descargar la imagen");
+      console.error(e);
+    }
+  };
 
     // primera carga
     cargarImagen();
