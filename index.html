@@ -1,82 +1,132 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Espectro VIAVI</title>
-  <meta http-equiv="refresh" content="10">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gráfica en vivo</title>
 
   <style>
     body {
-      background: #111;
-      color: #eee;
-      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 12px;
+      font-family: system-ui, sans-serif;
+      background: #f3f4f6;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+    }
+
+    h1 {
+      font-size: 20px;
       text-align: center;
-      padding: 20px;
+      margin-bottom: 12px;
     }
-    img {
-      width: 100%;
-      max-width: 1400px;
-      border: 1px solid #444;
-      margin-top: 15px;
-    }
+
     button {
-      margin-top: 10px;
-      padding: 10px 18px;
-      background: #1e88e5;
-      color: #fff;
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      margin-bottom: 10px;
       border: none;
-      border-radius: 6px;
-      font-weight: bold;
+      border-radius: 8px;
       cursor: pointer;
     }
-    button:hover {
-      background: #1565c0;
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .refresh {
+      background: #2563eb;
+      color: white;
+    }
+
+    .download {
+      background: #16a34a;
+      color: white;
+    }
+
+    .image-wrapper {
+      background: white;
+      border-radius: 10px;
+      padding: 8px;
+    }
+
+    img {
+      width: 100%;
+      border-radius: 6px;
+    }
+
+    .info {
+      text-align: center;
+      font-size: 14px;
+      margin-top: 8px;
+      color: #555;
     }
   </style>
+
 </head>
 <body>
 
-  <h2>Espectro VIAVI – actualización automática</h2>
+  <div class="container">
+    <h1>Gráfica en vivo</h1>
 
-  <button onclick="descargarImagen()">
-    ⬇ Descargar imagen
-  </button>
+    <button id="btnRefresh" class="refresh">🔄 Actualizar gráfica</button>
+    <button id="btnDownload" class="download">⬇️ Descargar imagen</button>
 
-  <br>
+    <div class="image-wrapper">
+      <img id="grafica" alt="Gráfica" />
+    </div>
 
-  <img id="grafica" src="https://chair-evanescence-duties-alleged.trycloudflare.com/grafica.png" alt="Gráfica">
+    <div class="info" id="info"></div>
+  </div>
 
   <script>
-    const IMG_URL = "https://chair-evanescence-duties-alleged.trycloudflare.com/grafica.png";
-    setInterval(() => {
+    // 🔴 CAMBIÁ ESTAS URLS
+    const BASE_URL = "https://flickr-null-about-drivers.trycloudflare.com/";
+    const IMG_URL  = BASE_URL + "grafica.png";
+    const API_REFRESH = BASE_URL + "refrescar";
+
+    const img = document.getElementById("grafica");
+    const btnRefresh = document.getElementById("btnRefresh");
+    const btnDownload = document.getElementById("btnDownload");
+    const info = document.getElementById("info");
+
+    function cargarImagen() {
       img.src = IMG_URL + "?t=" + Date.now();
-    }, 10000);
-
-    function descargarImagen() {
-      const url = IMG_URL + Date.now();
-
-      fetch(url)
-        .then(r => {
-          if (!r.ok) throw new Error('No se pudo descargar');
-          return r.blob();
-        })
-        .then(blob => {
-          const a = document.createElement('a');
-          const objectUrl = URL.createObjectURL(blob);
-
-          a.href = objectUrl;
-          a.download = 'espectro_viavi.png';
-          document.body.appendChild(a);
-          a.click();
-
-          document.body.removeChild(a);
-          URL.revokeObjectURL(objectUrl);
-        })
-        .catch(err => {
-          alert('Error al descargar la imagen');
-          console.error(err);
-        });
+      info.textContent = "Última actualización: " + new Date().toLocaleString();
     }
+
+    btnRefresh.onclick = async () => {
+      btnRefresh.disabled = true;
+      btnRefresh.textContent = "Actualizando...";
+
+      try {
+        await fetch(API_REFRESH, { method: "POST" });
+        console.log("Gráfica actualizada");
+        cargarImagen();
+      } catch (e) {
+        alert("Error al actualizar la gráfica");
+      } finally {
+        btnRefresh.disabled = false;
+        btnRefresh.textContent = "🔄 Actualizar gráfica";
+      }
+    };
+
+    btnDownload.onclick = () => {
+      const a = document.createElement("a");
+      a.href = IMG_URL + "?download=1&t=" + Date.now();
+      a.download = "grafica.png";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    };
+
+    // primera carga
+    cargarImagen();
   </script>
 
 </body>
