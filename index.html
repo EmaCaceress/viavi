@@ -24,7 +24,7 @@
       margin-bottom: 12px;
     }
 
-    button {
+    select, button {
       width: 100%;
       padding: 14px;
       font-size: 16px;
@@ -32,6 +32,11 @@
       border: none;
       border-radius: 8px;
       cursor: pointer;
+    }
+
+    select {
+      background: white;
+      border: 1px solid #ddd;
     }
 
     button:disabled {
@@ -50,6 +55,7 @@
     }
 
     .image-wrapper {
+      position: relative;
       background: white;
       border-radius: 10px;
       padding: 8px;
@@ -58,6 +64,20 @@
     img {
       width: 100%;
       border-radius: 6px;
+      display: block;
+    }
+
+    .overlay-text {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: rgba(0,0,0,0.75);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 16px;
+      pointer-events: none;
     }
 
     .info {
@@ -67,25 +87,38 @@
       color: #555;
     }
   </style>
-
 </head>
+
 <body>
 
   <div class="container">
     <h1>Gráfica en vivo</h1>
 
+    <!-- selector -->
+    <select id="etiqueta">
+      <option value="">— Seleccionar canal —</option>
+      <option>A1</option>
+      <option>A2</option>
+      <option>MAIN</option>
+      <option>P1</option>
+      <option>P2</option>
+      <option>P4</option>
+      <option>P5</option>
+    </select>
+
     <button id="btnRefresh" class="refresh">🔄 Actualizar gráfica</button>
     <button id="btnDownload" class="download">⬇️ Descargar imagen</button>
 
     <div class="image-wrapper">
-      <img id="grafica" alt="Gráfica" />
+      <img id="grafica" alt="Gráfica" crossorigin="anonymous" />
+      <div id="overlay" class="overlay-text"></div>
     </div>
 
     <div class="info" id="info"></div>
   </div>
 
   <script>
-    // 🔴 CAMBIÁ ESTAS URLS
+    // 🔴 URLS
     const BASE_URL = "https://flickr-null-about-drivers.trycloudflare.com/";
     const IMG_URL  = BASE_URL + "grafica.png";
     const API_REFRESH = BASE_URL + "refrescar";
@@ -94,12 +127,17 @@
     const btnRefresh = document.getElementById("btnRefresh");
     const btnDownload = document.getElementById("btnDownload");
     const info = document.getElementById("info");
+    const select = document.getElementById("etiqueta");
+    const overlay = document.getElementById("overlay");
 
     function cargarImagen() {
       img.src = IMG_URL + "?t=" + Date.now();
       info.textContent = "Última actualización: " + new Date().toLocaleString();
     }
 
+    select.onchange = () => {
+      overlay.textContent = select.value;
+    };
 
     btnRefresh.onclick = async () => {
       btnRefresh.disabled = true;
@@ -107,7 +145,6 @@
 
       try {
         await fetch(API_REFRESH, { method: "POST" });
-        console.log("Gráfica actualizada");
         cargarImagen();
       } catch (e) {
         alert("Error al actualizar la gráfica");
@@ -118,27 +155,35 @@
     };
 
     btnDownload.onclick = async () => {
-    try {
-      const response = await fetch(IMG_URL + "?t=" + Date.now());
-      const blob = await response.blob();
+      const etiqueta = select.value || "";
 
-      const url = window.URL.createObjectURL(blob);
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0);
+
+      if (etiqueta) {
+        ctx.font = "bold 48px Arial";
+        ctx.fillStyle = "rgba(0,0,0,0.7)";
+        ctx.fillRect(canvas.width - 260, 20, 240, 70);
+
+        ctx.fillStyle = "white";
+        ctx.fillText(etiqueta, canvas.width - 240, 70);
+      }
+
+      const blob = await new Promise(r => canvas.toBlob(r));
+      const url = URL.createObjectURL(blob);
+
       const a = document.createElement("a");
       a.href = url;
       a.download = "grafica.png";
-
-      document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
 
-      window.URL.revokeObjectURL(url);
-    } catch (e) {
-      alert("Error al descargar la imagen");
-      console.error(e);
-    }
-  };
+      URL.revokeObjectURL(url);
+    };
 
-    // primera carga
     cargarImagen();
   </script>
 
