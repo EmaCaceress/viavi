@@ -86,6 +86,16 @@
       margin-top: 8px;
       color: #555;
     }
+    input {
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      margin-bottom: 10px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-sizing: border-box;
+    }
   </style>
 </head>
 
@@ -96,7 +106,7 @@
 
     <!-- selector -->
     <select id="etiqueta">
-      <option value="">— Seleccionar canal —</option>
+      <option value="">— Seleccionar salida —</option>
       <option>A1</option>
       <option>A2</option>
       <option>MAIN</option>
@@ -105,6 +115,9 @@
       <option>P4</option>
       <option>P5</option>
     </select>
+
+    <!-- frecuencia -->
+    <input type="number" id="frecuencia" placeholder="horizontal"/>
 
     <button id="btnRefresh" class="refresh">🔄 Actualizar gráfica</button>
     <button id="btnDownload" class="download">⬇️ Descargar imagen</button>
@@ -118,17 +131,18 @@
   </div>
 
   <script>
-    // 🔴 URLS
-    const BASE_URL = "https://flickr-null-about-drivers.trycloudflare.com/";
-    const IMG_URL  = BASE_URL + "grafica.png";
-    const API_REFRESH = BASE_URL + "refrescar";
-
+    // DOM Elements
     const img = document.getElementById("grafica");
     const btnRefresh = document.getElementById("btnRefresh");
     const btnDownload = document.getElementById("btnDownload");
     const info = document.getElementById("info");
     const select = document.getElementById("etiqueta");
     const overlay = document.getElementById("overlay");
+    const frecuencia = document.getElementById("frecuencia");
+    // 🔴 URLS "";
+    const BASE_URL = "https://sophisticated-partial-ram-bikini.trycloudflare.com" || "http://localhost:3000";
+    const IMG_URL  = BASE_URL + "/grafica.png";
+    const API_REFRESH = BASE_URL + "/refrescar";
 
     function cargarImagen() {
       img.src = IMG_URL + "?t=" + Date.now();
@@ -144,7 +158,14 @@
       btnRefresh.textContent = "Actualizando...";
 
       try {
-        await fetch(API_REFRESH, { method: "POST" });
+        console.log(frecuencia.value);
+        await fetch(API_REFRESH, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ frecuencia: frecuencia.value })
+      });
         cargarImagen();
       } catch (e) {
         alert("Error al actualizar la gráfica");
