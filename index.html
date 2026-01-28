@@ -102,7 +102,20 @@
 <body>
 
   <div class="container">
-    <h1>Gráfica en vivo</h1>
+
+    <!-- link -->
+    <input type="text" id="link" placeholder="Clave del tunel"/>
+
+    <!-- nodoId -->
+    <input type="text" id="nodoId" placeholder="ID del nodo"/>
+    <!-- selector -->
+    <select id="nodoType">
+      <option value="">— Seleccionar nodo —</option>
+      <option>RPHY</option>
+      <option>LEGACY</option>
+    </select>
+
+    <h1>Captura de espectro online</h1>
 
     <!-- selector -->
     <select id="etiqueta">
@@ -139,11 +152,13 @@
     const select = document.getElementById("etiqueta");
     const overlay = document.getElementById("overlay");
     const frecuencia = document.getElementById("frecuencia");
-    // 🔴 URLS "";
-    const BASE_URL = "https://sophisticated-partial-ram-bikini.trycloudflare.com" || "http://localhost:3000";
+    const link = document.getElementById("link").value;
+    // 🔴 URLS "https://sophisticated-partial-ram-bikini.trycloudflare.com"
+    const BASE_URL = link || "http://localhost:3000";
     const IMG_URL  = BASE_URL + "/grafica.png";
     const API_REFRESH = BASE_URL + "/refrescar";
-
+    let nodoUrl = "https://192.168.230.131/pathtrak/live/index.html#/app/";
+    // Initial load
     function cargarImagen() {
       img.src = IMG_URL + "?t=" + Date.now();
       info.textContent = "Última actualización: " + new Date().toLocaleString();
@@ -156,15 +171,24 @@
     btnRefresh.onclick = async () => {
       btnRefresh.disabled = true;
       btnRefresh.textContent = "Actualizando...";
+      const nodoId = document.getElementById("nodoId").value;
+      let nodoType = document.getElementById("nodoType").value;
+      const path = nodoType === "LEGACY"
+      ? `spectrum?hcu=${nodoId}`
+      : `heatmap?cmts_us_port=${nodoId}`;
 
+      nodoUrl += path;
       try {
-        console.log(frecuencia.value);
         await fetch(API_REFRESH, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ frecuencia: frecuencia.value })
+        body: JSON.stringify({
+          frecuencia: frecuencia.value,
+          nodoUrl: nodoUrl,
+          nodoType: nodoType
+         })
       });
         cargarImagen();
       } catch (e) {
@@ -204,8 +228,6 @@
 
       URL.revokeObjectURL(url);
     };
-
-    cargarImagen();
   </script>
 
 </body>
