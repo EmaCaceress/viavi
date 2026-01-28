@@ -144,91 +144,90 @@
   </div>
 
   <script>
-    // DOM Elements
-    const img = document.getElementById("grafica");
-    const btnRefresh = document.getElementById("btnRefresh");
-    const btnDownload = document.getElementById("btnDownload");
-    const info = document.getElementById("info");
-    const select = document.getElementById("etiqueta");
-    const overlay = document.getElementById("overlay");
-    const frecuencia = document.getElementById("frecuencia");
-    const link = document.getElementById("link").value;
-    // 🔴 URLS "https://sophisticated-partial-ram-bikini.trycloudflare.com"
-    const BASE_URL = link || "http://localhost:3000";
-    const IMG_URL  = BASE_URL + "/grafica.png";
-    const API_REFRESH = BASE_URL + "/refrescar";
-    let nodoUrl = "https://192.168.230.131/pathtrak/live/index.html#/app/";
-    // Initial load
-    function cargarImagen() {
-      img.src = IMG_URL + "?t=" + Date.now();
-      info.textContent = "Última actualización: " + new Date().toLocaleString();
-    }
-
-    select.onchange = () => {
-      overlay.textContent = select.value;
+    // Helpers
+    const $ = id => document.getElementById(id);
+  
+    const img = $("grafica");
+    const btnRefresh = $("btnRefresh");
+    const btnDownload = $("btnDownload");
+    const overlay = $("overlay");
+    const info = $("info");
+  
+    const BASE_NODE_URL = "https://192.168.230.131/pathtrak/live/index.html#/app/";
+  
+    const getBaseUrl = () => {
+      const link = $("link").value.trim();
+      return `https://${link}.trycloudflare.com`;
     };
-
+  
+    const cargarImagen = () => {
+      img.src = `${getBaseUrl()}/grafica.png?t=${Date.now()}`;
+      info.textContent = `Última actualización: ${new Date().toLocaleString()}`;
+    };
+  
+    $("etiqueta").onchange = e => {
+      overlay.textContent = e.target.value;
+    };
+  
     btnRefresh.onclick = async () => {
       btnRefresh.disabled = true;
       btnRefresh.textContent = "Actualizando...";
-      const nodoId = document.getElementById("nodoId").value;
-      let nodoType = document.getElementById("nodoType").value;
+  
+      const nodoId   = $("nodoId").value;
+      const nodoType = $("nodoType").value;
+      const frecuencia = $("frecuencia").value;
+  
       const path = nodoType === "LEGACY"
-      ? `spectrum?hcu=${nodoId}`
-      : `heatmap?cmts_us_port=${nodoId}`;
-
-      nodoUrl += path;
+        ? `spectrum?hcu=${nodoId}`
+        : `heatmap?cmts_us_port=${nodoId}`;
+  
+      const payload = {
+        frecuencia,
+        nodoType,
+        nodoUrl: BASE_NODE_URL + path
+      };
+  
       try {
-        await fetch(API_REFRESH, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          frecuencia: frecuencia.value,
-          nodoUrl: nodoUrl,
-          nodoType: nodoType
-         })
-      });
+        await fetch(`${getBaseUrl()}/refrescar`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
         cargarImagen();
-      } catch (e) {
+      } catch {
         alert("Error al actualizar la gráfica");
       } finally {
         btnRefresh.disabled = false;
         btnRefresh.textContent = "🔄 Actualizar gráfica";
       }
     };
-
+  
     btnDownload.onclick = async () => {
-      const etiqueta = select.value || "";
-
-      const canvas = document.createElement("canvas");
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-
+      const etiqueta = $("etiqueta").value;
+      const canvas = Object.assign(document.createElement("canvas"), {
+        width: img.naturalWidth,
+        height: img.naturalHeight
+      });
+  
       const ctx = canvas.getContext("2d");
       ctx.drawImage(img, 0, 0);
-
+  
       if (etiqueta) {
         ctx.font = "bold 48px Arial";
         ctx.fillStyle = "rgba(0,0,0,0.7)";
         ctx.fillRect(canvas.width - 260, 20, 240, 70);
-
-        ctx.fillStyle = "white";
+        ctx.fillStyle = "#fff";
         ctx.fillText(etiqueta, canvas.width - 240, 70);
       }
-
+  
       const blob = await new Promise(r => canvas.toBlob(r));
-      const url = URL.createObjectURL(blob);
-
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "grafica.png";
-      a.click();
-
-      URL.revokeObjectURL(url);
+      Object.assign(document.createElement("a"), {
+        href: URL.createObjectURL(blob),
+        download: "grafica.png"
+      }).click();
     };
   </script>
+  
 
 </body>
 </html>
